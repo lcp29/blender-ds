@@ -6,7 +6,8 @@ import bpy
 from absl import app, flags
 import json
 import math
-import tqdm
+from tqdm import tqdm
+import time
 
 flags.DEFINE_string('scene_path', '', 'path to the Blender scene')
 flags.DEFINE_string('cam_dir', '', 'directory containing camera JSON files')
@@ -89,9 +90,15 @@ def main(_):
     # load blender scene
     bpy.ops.wm.open_mainfile(filepath=FLAGS.scene_path)
 
+    # set up Cycles as rendering engine
+    bpy.context.scene.render.engine = 'CYCLES'
+    # use GPU
+    bpy.context.scene.cycles.device = 'GPU'
+    logging.info('Cycles set up as rendering engine')
+
     # render splits
     for split in splits:
-        logging.info(f'Rendering split {split}...')
+        logging.info(f'Rendering split "{split}"...')
         # find camera in the scene
         camera = None
         for obj in bpy.data.objects:
@@ -104,10 +111,18 @@ def main(_):
             camera = bpy.context.active_object
         # set camera intrinstics
         for k, v in cam_intrinstics[split].items():
-            print(k, v)
+            setattr(camera.data, k, v)
         logging.info(f'Camera intrinstics set: {cam_intrinstics[split]}')
 
+        # render samples
+        pbar = tqdm(range(len(file_dirs[split])))
 
+        for idx in pbar:
+            pbar.set_description(file_dirs[split][idx])
+            # set camera extrinstic
+            # blender requires transformed c2w if use np matrix as input
+            camera.matrix_world = cam_extrinstics[split][idx].T
+            
 
 
 if __name__ == '__main__':
