@@ -3,3 +3,9 @@
 --output_dir=./outputs/lego
 --resx=800
 --resy=800
+--rgb_format=png
+--alpha_format=png
+--depth_format=png
+--normal_format=png
+--depth_min=2
+--depth_max=6
