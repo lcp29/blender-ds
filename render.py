@@ -68,7 +68,6 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
                 outnode['node'].file_slots[0].path = os.path.join(file_dirs[split][idx], f'{outnode["name"]}')
             bpy.ops.render.render(write_still=True)
             break
-        break
 
 def main(_):
     # delete existing output directory
@@ -290,6 +289,15 @@ def main(_):
 
     # render splits
     render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
+
+    # remove all frame indices
+    for root, _, files in os.walk(FLAGS.output_dir):
+        for file in files:
+            if (file.endswith('.png') or file.endswith('.exr')) and ('0001' in file):
+                new_file = file.replace('0001', '')
+                os.rename(os.path.join(root, file), os.path.join(root, new_file))
+    logging.info('Frame index removed.')
+
 
 if __name__ == '__main__':
     argv = sys.argv
