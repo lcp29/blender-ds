@@ -1,5 +1,6 @@
 
 import sys, os, shutil
+import time
 import numpy as np
 import logging
 import bpy
@@ -67,7 +68,6 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
                 outnode['node'].base_path = os.path.join(FLAGS.output_dir)
                 outnode['node'].file_slots[0].path = os.path.join(file_dirs[split][idx], f'{outnode["name"]}')
             bpy.ops.render.render(write_still=True)
-            break
 
 def main(_):
     # delete existing output directory
@@ -103,7 +103,6 @@ def main(_):
     #            The output dir tree will be like:
     #            output---train---r_0---color.png
     #                   |       |     |-normal.png
-    #                   |       |     |-metadata.json
     #                   |       |     \-...
     #                   |       |-r_1--...
     #                  ...     ...
@@ -142,14 +141,33 @@ def main(_):
     bpy.ops.wm.open_mainfile(filepath=FLAGS.scene_path)
 
     # set up Cycles as rendering engine
-    bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+    bpy.context.scene.render.engine = 'CYCLES'
     if FLAGS.film_transparent:
         bpy.context.scene.render.film_transparent = True
     else:
         bpy.context.scene.render.film_transparent = False
 
     # use GPU
+    cycle_preferences = bpy.context.preferences.addons['cycles'].preferences
+    cycle_preferences.refresh_devices()
+    device_types = cycle_preferences.get_device_types(bpy.context)
+    device_names = [dt[0] for dt in device_types]
+    # try to use OPTIX first
+    if 'OPTIX' in device_names:
+        cycle_preferences.compute_device_type = 'OPTIX'
+    elif 'CUDA' in device_names:
+        cycle_preferences.compute_device_type = 'CUDA'
+    elif 'METAL' in device_names:
+        cycle_preferences.compute_device_type = 'METAL'
+    
+    # enable all non-CPU devices
+    logging.info(f'Compute device type: {cycle_preferences.compute_device_type}')
+    for device in cycle_preferences.devices:
+        if device.type != 'CPU':
+            device.use = True
+        
     bpy.context.scene.cycles.device = 'GPU'
+    bpy.context.scene.cycles.feature_set = 'SUPPORTED'
     logging.info('Cycles set up as rendering engine')
 
     # raw output
