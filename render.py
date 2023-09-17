@@ -61,7 +61,7 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
         for idx in pbar:
             pbar.set_description(file_dirs[split][idx])
             # set camera extrinstic
-            # blender requires transformed c2w if using numpy matrix as input
+            # blender requires transposed c2w if using numpy matrix as input
             camera.matrix_world = cam_extrinstics[split][idx].T
             # set output file slot
             for outnode in outnodes:
