@@ -50,6 +50,9 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
         if camera is None:
             bpy.ops.object.camera_add()
             camera = bpy.context.active_object
+        # set render resolution before setting camera params
+        bpy.context.scene.render.resolution_x = FLAGS.resx
+        bpy.context.scene.render.resolution_y = FLAGS.resy
         # set camera intrinstics
         for k, v in cam_intrinstics[split].items():
             setattr(camera.data, k, v)
@@ -65,7 +68,7 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
             camera.matrix_world = cam_extrinstics[split][idx].T
             # set output file slot
             for outnode in outnodes:
-                outnode['node'].base_path = os.path.join(FLAGS.output_dir)
+                outnode['node'].base_path = os.path.abspath(FLAGS.output_dir)
                 outnode['node'].file_slots[0].path = os.path.join(file_dirs[split][idx], f'{outnode["name"]}')
             bpy.ops.render.render(write_still=True)
 
