@@ -1,4 +1,4 @@
---scene_path=./scenes/bunny.blend
+--scene_path=./scenes/trans-bunny.blend
 --cam_dir=./cameras
 --output_dir=./outputs/bunny
 --resx=800

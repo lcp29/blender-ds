@@ -120,13 +120,13 @@ def main(_):
         logging.info(f'Loading split "{split}"...')
         # load camera intrinstics
         cam_fovx = split_json_objs[split]['camera_angle_x']
-        cam_intrinstic = {'sensor_width': FLAGS.resx,                       # width
-                          'sensor_height': FLAGS.resy,                      # height
-                          'sensor_fit': 'AUTO',                             # width or height to which to fit the sensor size 
-                          'lens': 0.5 * FLAGS.resx / math.tan(cam_fovx),    # focal
-                          'clip_start': 0.1,                                # length in meters
+        cam_intrinstic = {'sensor_width': FLAGS.resx,                           # width
+                          'sensor_height': FLAGS.resy,                          # height
+                          'sensor_fit': 'AUTO',                                 # width or height to which to fit the sensor size 
+                          'lens': 0.5 * FLAGS.resx / math.tan(0.5 * cam_fovx),  # focal
+                          'clip_start': 0.1,                                    # length in meters
                           'clip_end': 100,
-                          'type': 'PERSP'}                                  # perspective camera
+                          'type': 'PERSP'}                                      # perspective camera
         cam_intrinstics[split] = cam_intrinstic
         logging.info(f'Camera intrinstic: {cam_intrinstic}')
 
