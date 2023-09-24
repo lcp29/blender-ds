@@ -15,7 +15,7 @@ dataset_root---image---000.png
 
 #### Camera Convention
 
-![camera-coord](static\camera-coord.png)
+![camera-coord](static/camera-coord.png)
 
 The camera points to +z axis and the right hand side is +x axis. The camera space is in right-hand coordinates.
 
