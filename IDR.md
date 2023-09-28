@@ -67,7 +67,7 @@ f_x & 0 & c_x & 0 \\
 \right]^{-1},\\
 \text{where\ }
 f_x=\frac{W}{2\cdot\text{fovX/2}},
-c_x=\frac{W}{2},\cdots
+c_x=\frac{W-1}{2},\cdots
 $$
 
 ##### scale_mat

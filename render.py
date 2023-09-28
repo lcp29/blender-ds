@@ -1,6 +1,5 @@
 
 import sys, os, shutil
-import time
 import numpy as np
 import logging
 import bpy
@@ -8,6 +7,7 @@ from absl import app, flags
 import json
 import math
 from tqdm import tqdm
+import re
 
 flags.DEFINE_string('scene_path', '', 'path to the Blender scene')
 flags.DEFINE_string('cam_dir', '', 'directory containing camera JSON files')
@@ -37,7 +37,7 @@ def set_node_output_format(node, flag):
         node.format.file_format = 'PNG'
         node.format.color_depth = '16'
 
-def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes):
+def render_splits(splits, cam_intrinsics, cam_extrinstics, file_dirs, outnodes):
     for split in splits:
         logging.info(f'Rendering split "{split}"...')
         # find camera in the scene
@@ -53,10 +53,10 @@ def render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
         # set render resolution before setting camera params
         bpy.context.scene.render.resolution_x = FLAGS.resx
         bpy.context.scene.render.resolution_y = FLAGS.resy
-        # set camera intrinstics
-        for k, v in cam_intrinstics[split].items():
+        # set camera intrinsics
+        for k, v in cam_intrinsics[split].items():
             setattr(camera.data, k, v)
-        logging.info(f'Camera intrinstics set: {cam_intrinstics[split]}')
+        logging.info(f'Camera intrinsics set: {cam_intrinsics[split]}')
 
         # render samples
         pbar = tqdm(range(len(file_dirs[split])))
@@ -97,8 +97,8 @@ def main(_):
     logging.info(f'Found split{"s" if len(splits) > 1 else ""} in {FLAGS.cam_dir}: {splits}')
 
     # load JSON data
-    # camera intrinstics for each split
-    cam_intrinstics = {}
+    # camera intrinsics for each split
+    cam_intrinsics = {}
     # filename and camera to world matrices
     # =================================================================
     # Important: file_path is interpreted as output directory, which 
@@ -118,17 +118,17 @@ def main(_):
 
     for split in splits:
         logging.info(f'Loading split "{split}"...')
-        # load camera intrinstics
+        # load camera intrinsics
         cam_fovx = split_json_objs[split]['camera_angle_x']
-        cam_intrinstic = {'sensor_width': FLAGS.resx,                           # width
+        cam_intrinsic = {'sensor_width': FLAGS.resx,                           # width
                           'sensor_height': FLAGS.resy,                          # height
                           'sensor_fit': 'AUTO',                                 # width or height to which to fit the sensor size 
                           'lens': 0.5 * FLAGS.resx / math.tan(0.5 * cam_fovx),  # focal
                           'clip_start': 0.1,                                    # length in meters
                           'clip_end': 100,
                           'type': 'PERSP'}                                      # perspective camera
-        cam_intrinstics[split] = cam_intrinstic
-        logging.info(f'Camera intrinstic: {cam_intrinstic}')
+        cam_intrinsics[split] = cam_intrinsic
+        logging.info(f'Camera intrinsic: {cam_intrinsic}')
 
         # load output filename and c2w matrices
         file_paths = []
@@ -207,7 +207,7 @@ def main(_):
         logging.info(f'RGB{"A" if FLAGS.rgba else ""} {FLAGS.rgb_format} output enabled.')
 
     # render splits
-    render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
+    render_splits(splits, cam_intrinsics, cam_extrinstics, file_dirs, outnodes)
 
     # clear output nodes
     for outnode in outnodes:
@@ -309,13 +309,14 @@ def main(_):
         logging.info(f'Normal {FLAGS.alpha_format} output enabled.')
 
     # render splits
-    render_splits(splits, cam_intrinstics, cam_extrinstics, file_dirs, outnodes)
+    render_splits(splits, cam_intrinsics, cam_extrinstics, file_dirs, outnodes)
 
     # remove all frame indices
     for root, _, files in os.walk(FLAGS.output_dir):
         for file in files:
-            if (file.endswith('.png') or file.endswith('.exr')) and ('0001' in file):
-                new_file = file.replace('0001', '')
+            if (file.endswith('.png') or file.endswith('.exr')):
+                # remove all digits
+                new_file = re.sub(r'[0-9]+', '', file)
                 os.rename(os.path.join(root, file), os.path.join(root, new_file))
     logging.info('Frame index removed.')
 
