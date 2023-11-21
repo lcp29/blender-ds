@@ -33,7 +33,7 @@ to map the camera space points to the image space points (different from ordinar
 $$
 [u,v,1]^\mathrm T=K[x',y',z']^\mathrm T, \text{where}\ K=\left[\begin{matrix}f_x&0&c_x\\0&f_y&c_y\\0&0&1\end{matrix}\right].
 $$
-The UV coordinates start from the top-left corner of the image and reaches their maximums at the bottom-right corner as $(\text{width}-1,\text{height}-1)$. Assume we have a fovX $\alpha$ and image size $(H, W)$, at $z'=1$ we have $x'=\tan(\alpha/2)$ and we want to enlarge it to $W/2$ so we have the focal length $\frac{W}{\tan(\alpha/2)}$ and $c_x=W/2$. 
+The UV coordinates start from the top-left corner of the image and reaches their maximums at the bottom-right corner as $(\text{width}-1,\text{height}-1)$. Assume we have a fovX $\alpha$ and image size $(H, W)$, at $z'=1$ we have $x'=\tan(\alpha/2)$ and we want to enlarge it to $W/2$ so we have the focal length $\frac{W}{2\tan(\alpha/2)}$ and $c_x=(W-1)/2$. 
 
 #### NPZ File Format
 
@@ -66,7 +66,7 @@ f_x & 0 & c_x & 0 \\
 \end{matrix}
 \right]^{-1},\\
 \text{where\ }
-f_x=\frac{W}{2\cdot\text{fovX/2}},
+f_x=\frac{W}{2\cdot\tan(\text{fovX/2})},
 c_x=\frac{W-1}{2},\cdots
 $$
 
