@@ -43,22 +43,35 @@ def main(_):
     # all objects
     objs = bpy.context.scene.objects
     # get all mesh vertices
+    with_bounding_sphere = False
+    bounding_sphere = None
     for obj in objs:
+        if obj.name == 'bounding_sphere':
+            with_bounding_sphere = True
+            bounding_sphere = obj
+            break
         if obj.type == 'MESH':
             points_co_global.extend([obj.matrix_world @ vertex.co for vertex in obj.data.vertices])
-
-    # get the bounding box first
-    pts = np.array(points_co_global)
-    aabb0, aabb1 = np.min(pts, axis=0), np.max(pts, axis=0)
-    sphere_center = 0.5 * (aabb0 + aabb1)
-    sphere_radius = 0.5 * np.linalg.norm(aabb1 - aabb0) * 1.01  # slightly larger
+    if with_bounding_sphere:
+        sphere_center = np.array(obj.location)
+        sphere_radius = obj.scale[0]
+    else:
+        # get the bounding box first
+        pts = np.array(points_co_global)
+        aabb0, aabb1 = np.min(pts, axis=0), np.max(pts, axis=0)
+        sphere_center = 0.5 * (aabb0 + aabb1)
+        sphere_radius = 0.5 * np.linalg.norm(aabb1 - aabb0) * 1.01  # slightly larger
+    
     scale_mat = np.diag([sphere_radius, sphere_radius, sphere_radius])
     scale_mat = np.concatenate([scale_mat, sphere_center[:, None]], axis=1)
     scale_mat = np.concatenate([scale_mat, np.zeros([1, 4])], axis=0)
     scale_mat[3, 3] = 1.
     scale_mat = scale_mat.astype(np.float32)
 
-    logging.info(f'Scene bounding box: {aabb0}, {aabb1}, bounding sphere c={sphere_center}, r={sphere_radius}')
+    if with_bounding_sphere:
+        logging.info(f'Bounding sphere c={sphere_center}, r={sphere_radius}')
+    else:
+        logging.info(f'Scene bounding box: {aabb0}, {aabb1}, bounding sphere c={sphere_center}, r={sphere_radius}')
 
     # current image index
     image_idx = 0
@@ -102,7 +115,7 @@ def main(_):
             image_idx += 1
     
     # save npz file
-    np.savez(os.path.join(result_dir, 'camera_sphere.npz'), **npz_file)
+    np.savez(os.path.join(result_dir, 'cameras_sphere.npz'), **npz_file)
 
 
 if __name__ == '__main__':

@@ -21,19 +21,25 @@ The camera points to +z axis and the right hand side is +x axis. The camera spac
 
 To transform a world-space object to the camera space, we left-multiply its homogeneous location $[x,y,z,1]^\mathrm T$ with a $3\times4$ matrix $[R|t]$, which represents the orthogonal rotation and the translation in the transform. To obtain $[R|t]$, we derive the inverse of the matrix $\left[\begin{matrix}\mathbf x&\mathbf y&\mathbf z&\mathbf t\\0&0&0&1\end{matrix}\right]$ in which $\mathbf x$, $\mathbf y$, $\mathbf z$ is the camera orientations (in the above convention) and $\mathbf t$ is the location of the camera's central point.
 
-After above transform we have the object in camera space $[x',y',z']^\mathrm T$. To further transform it into image space, we have
+After above transform we have the object in camera space $[x',y',z']^\mathrm T$, but we are representing it in the form of canonical image projection space:
+$$
+\left[x',y',z'\right]^\mathrm T=z'\left[x_p,y_p,1\right]^\mathrm T,
+$$
+where $x_p=x'/z'$, $y_p=y'/z'$. This is a $45^\circ$ perspective projection space with $f_x=f_y=1$. Note that we don't need near and far plane because we are flatting the whole space into $z_p=1$ plane thus no need to order them.
+
+To further transform it into image window $(u,v)\in[0, \mathrm{width}]\times[0, \mathrm{height}]$, we have
 $$
 \begin{align}
-&u=\frac{f_x}{z'}x'+c_x,\\
-&v=\frac{f_y}{z'}x'+c_y,\\
-&z=1
+&u=f_xx_p+c_x,\\
+&v=f_yy_p+c_y,\\
+&z_{img}=1
 \end{align}
 $$
-to map the camera space points to the image space points (different from ordinary perspective projection matrices we make $z=1$ to "compress" the whole scene to the $z=1$ plane), where $f_x$ and $f_y$ are x and y focal lengths and $c_x$, $c_y$ are the UV coordinates of the image central point. There is a corresponding matrix with the above transform:
+to map the points to the image window points (different from ordinary perspective projection matrices we make $z=1$ to "compress" the whole scene to the $z=1$ plane), where $f_x$ and $f_y$ are x and y focal lengths (can be taken as the distance from th film to the focal point when the file's of size $(H, W)$) and $c_x$, $c_y$ are the UV coordinates of the image central point. There is a corresponding matrix with the above transform:
 $$
-[u,v,1]^\mathrm T=K[x',y',z']^\mathrm T, \text{where}\ K=\left[\begin{matrix}f_x&0&c_x\\0&f_y&c_y\\0&0&1\end{matrix}\right].
+[u,v,1]^\mathrm T=K[x_p,y_p,1]^\mathrm T, \text{where}\ K=\left[\begin{matrix}f_x&0&c_x\\0&f_y&c_y\\0&0&1\end{matrix}\right].
 $$
-The UV coordinates start from the top-left corner of the image and reaches their maximums at the bottom-right corner as $(\text{width}-1,\text{height}-1)$. Assume we have a fovX $\alpha$ and image size $(H, W)$, at $z'=1$ we have $x'=\tan(\alpha/2)$ and we want to enlarge it to $W/2$ so we have the focal length $\frac{W}{\tan(\alpha/2)}$ and $c_x=W/2$. 
+The UV coordinates start from the top-left corner of the image and reaches their maximums at the bottom-right corner as $(\text{width}-1,\text{height}-1)$. Assume we have a fovX $\alpha$ and image size $(H, W)$, at $z'=1$ we have $x'=\tan(\alpha/2)$ and we want to enlarge it to $W/2$ so we have the focal length $\frac{W}{2\tan(\alpha/2)}$ and $c_x=(W-1)/2$. 
 
 #### NPZ File Format
 
@@ -66,7 +72,7 @@ f_x & 0 & c_x & 0 \\
 \end{matrix}
 \right]^{-1},\\
 \text{where\ }
-f_x=\frac{W}{2\cdot\text{fovX/2}},
+f_x=\frac{W}{2\cdot\tan(\text{fovX/2})},
 c_x=\frac{W-1}{2},\cdots
 $$
 
